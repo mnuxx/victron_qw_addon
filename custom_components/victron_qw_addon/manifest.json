@@ -6,5 +6,6 @@
   "issue_tracker": "https://github.com/mnuxx/victron_qw_addon/issues",
   "codeowners": ["@mnuxx"],
   "version": "0.1.1",
-  "requirements": ["pymodbus==3.9.2"]
+  "requirements": ["pymodbus==3.9.2"],
+  "iot_class": "Local Polling"
 }
