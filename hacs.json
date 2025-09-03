@@ -1,7 +1,9 @@
 {
   "name": "Victron QW Addon",
   "render_readme": true,
+  "content_in_root": false,
   "ignore": [
-    "brands"
+    "brands",
+    "validation.brands"
   ]
 }
