@@ -1,3 +1,30 @@
 {
-  "title": "Victron QW Addon"
+  "title": "Victron QW Addon",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Victron QW Addon",
+        "description": "Configure the connection details.",
+        "data": {
+          "ip_address": "Device IP address",
+          "slave_id": "Insert PV inverter slave_id"
+        }
+      }
+    },
+    "error": {
+      "invalid_slave_id": "Slave ID must be a number between 1 and 247"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Victron QW Addon Options",
+        "description": "Update connection details.",
+        "data": {
+          "ip_address": "Device IP address",
+          "slave_id": "Insert PV inverter slave_id"
+        }
+      }
+    }
+  }
 }
