@@ -1,0 +1,9 @@
+{
+  "domain": "victron_qw_addon",
+  "name": "Victron QW Addon",
+  "version": "0.1.0",
+  "documentation": "https://github.com/yourusername/victron_qw_addon",
+  "requirements": [],
+  "dependencies": [],
+  "codeowners": ["@yourusername"]
+}
