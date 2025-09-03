@@ -1,7 +1,0 @@
-{
-  "victron_qw_addon": {
-    "domain": "victron_qw_addon",
-    "name": "Victron QW Addon",
-    "integrations": ["victron_qw_addon"]
-  }
-}
