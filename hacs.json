@@ -1,5 +1,7 @@
 {
   "name": "Victron QW Addon",
   "render_readme": true,
-  "category": "integration"
+  "category": "integration",
+  "iot_class": "Local Polling",
+  "homeassistant": "2023.1.0"
 }
