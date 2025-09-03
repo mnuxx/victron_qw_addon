@@ -204,6 +204,10 @@ class VictronDataUpdateCoordinator(DataUpdateCoordinator):
             # Ensure a default battery temperature in Celsius if register is missing/unavailable
             if "victron_qw_battery_temperature" not in data:
                 data["victron_qw_battery_temperature"] = DEFAULT_BATTERY_TEMPERATURE_C
+            
+            # Ensure Total PV Power shows 0 when sensor is not available
+            if "total_pv_power" not in data:
+                data["total_pv_power"] = 0
             return data
         except ConnectionException as error:
             raise UpdateFailed(f"Connection failed: {error}") from error
@@ -271,10 +275,17 @@ class VictronSensor(SensorEntity):
         self._attr_force_update = True
 
     @property
-    def native_value(self) -> str | None:
+    def native_value(self) -> float | int | str | None:
         """Return the state of the sensor."""
         if self.coordinator.data:
-            return self.coordinator.data.get(self.entity_description.key)
+            value = self.coordinator.data.get(self.entity_description.key)
+            # For Total PV Power, return 0 instead of None when data is missing
+            if value is None and self.entity_description.key == "total_pv_power":
+                return 0
+            return value
+        # For Total PV Power, return 0 when coordinator has no data
+        if self.entity_description.key == "total_pv_power":
+            return 0
         return None
 
     @property
