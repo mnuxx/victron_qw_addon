@@ -6,10 +6,6 @@ from typing import Any
 
 from pymodbus.client import ModbusTcpClient
 from pymodbus.exceptions import ConnectionException
-try:
-    from pymodbus.payload import Endian
-except ImportError:
-    from pymodbus.constants import Endian
 
 from homeassistant.components.sensor import (
     SensorEntity,
