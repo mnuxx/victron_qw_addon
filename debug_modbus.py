@@ -24,28 +24,35 @@ def test_modbus_connection(ip_address, port=502, slave_id=100):
 
         # Test reading some common registers
         test_registers = [
-            (820, "Grid L1 Power", 1),
-            (840, "Battery Voltage", 1),
-            (1052, "Total PV Power", 2),  # 32-bit register
+            (820, "Grid L1 Power", 1, 100),
+            (840, "Battery Voltage", 1, 100),
+            (1052, "Total PV Power", 2, 100),  # 32-bit register, try with slave 100 first
         ]
 
-        for reg_addr, reg_name, count in test_registers:
+        for reg_addr, reg_name, count, default_slave in test_registers:
             try:
                 print(f"\nTesting register {reg_addr} ({reg_name}):")
 
-                # Try input registers
+                # Try with provided slave ID first
                 result = client.read_input_registers(address=reg_addr, count=count, slave=slave_id)
                 if not result.isError():
-                    print(f"  ✅ Input register {reg_addr}: {result.registers}")
+                    print(f"  ✅ Input register {reg_addr} (slave {slave_id}): {result.registers}")
                 else:
-                    print(f"  ❌ Input register {reg_addr}: Error {result.function_code}, Exception {getattr(result, 'exception_code', 'N/A')}")
+                    print(f"  ❌ Input register {reg_addr} (slave {slave_id}): Error {result.function_code}, Exception {getattr(result, 'exception_code', 'N/A')}")
 
-                # Try holding registers
                 result = client.read_holding_registers(address=reg_addr, count=count, slave=slave_id)
                 if not result.isError():
-                    print(f"  ✅ Holding register {reg_addr}: {result.registers}")
+                    print(f"  ✅ Holding register {reg_addr} (slave {slave_id}): {result.registers}")
                 else:
-                    print(f"  ❌ Holding register {reg_addr}: Error {result.function_code}, Exception {getattr(result, 'exception_code', 'N/A')}")
+                    print(f"  ❌ Holding register {reg_addr} (slave {slave_id}): Error {result.function_code}, Exception {getattr(result, 'exception_code', 'N/A')}")
+
+                # If using different slave ID, also try with default slave
+                if slave_id != default_slave:
+                    result = client.read_holding_registers(address=reg_addr, count=count, slave=default_slave)
+                    if not result.isError():
+                        print(f"  ✅ Holding register {reg_addr} (slave {default_slave}): {result.registers}")
+                    else:
+                        print(f"  ❌ Holding register {reg_addr} (slave {default_slave}): Error {result.function_code}, Exception {getattr(result, 'exception_code', 'N/A')}")
 
             except Exception as e:
                 print(f"  ❌ Exception reading register {reg_addr}: {e}")
@@ -72,7 +79,24 @@ def scan_slave_ids(ip_address, port=502):
 
     active_slaves = []
 
-    for slave_id in range(1, 248):  # Valid Modbus slave ID range
+    # Test common slave IDs used by Victron devices
+    common_slave_ids = [1, 10, 20, 30, 100, 225, 226, 227]
+
+    for slave_id in common_slave_ids:
+        try:
+            # Try reading a common register
+            result = client.read_holding_registers(address=820, count=1, slave=slave_id)
+            if not result.isError():
+                print(f"✅ Slave ID {slave_id} responded")
+                active_slaves.append(slave_id)
+        except:
+            pass
+
+    # Also do a broader scan for slave IDs 1-247 (but less aggressively)
+    print("\nDoing broader scan (this may take a moment)...")
+    for slave_id in range(1, 248):
+        if slave_id in common_slave_ids:
+            continue  # Already tested
         try:
             result = client.read_holding_registers(address=820, count=1, slave=slave_id)
             if not result.isError():
@@ -84,9 +108,11 @@ def scan_slave_ids(ip_address, port=502):
     client.close()
 
     if active_slaves:
-        print(f"\nActive slave IDs found: {active_slaves}")
+        print(f"\nActive slave IDs found: {sorted(active_slaves)}")
+        print("Note: Some devices may respond to specific registers but not general queries.")
     else:
         print("\nNo active slave IDs found")
+        print("Try testing specific slave IDs manually with: python debug_modbus.py <ip> 502 <slave_id>")
 
     return active_slaves
 

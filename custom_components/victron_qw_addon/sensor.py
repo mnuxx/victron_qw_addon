@@ -135,10 +135,18 @@ class VictronDataUpdateCoordinator(DataUpdateCoordinator):
                         failures += 1
                         if count <= 3 or count % 3 == 0:
                             _LOGGER.warning(
-                                "Modbus exception 10 (gateway target no response) for key=%s at slave=%s. Check the slave ID and wiring.",
+                                "Modbus exception 10 (gateway target no response) for key=%s at slave=%s. "
+                                "This may indicate the device is temporarily unavailable or using a different slave ID.",
                                 description.key,
                                 description.slave_id,
                             )
+                    # For PV sensors, be more tolerant of failures since they might be on separate devices
+                    if description.key == "total_pv_power" and count >= 5:
+                        _LOGGER.info(
+                            "PV sensor failed %s times. If you have a separate PV inverter, ensure it's powered on and connected. "
+                            "If not, set the slave ID to %s (same as main device).",
+                            count, SLAVE_ID
+                        )
                     continue
 
                 # Success path: reset fail count
@@ -177,6 +185,10 @@ class VictronDataUpdateCoordinator(DataUpdateCoordinator):
                     except (TypeError, ValueError):
                         _LOGGER.debug("Multiplier application failed for %s", description.key)
                 data[description.key] = value
+
+                # Log successful PV data reads
+                if description.key == "total_pv_power" and base_address in self._fail_counts and self._fail_counts[base_address] > 0:
+                    _LOGGER.info("PV sensor recovered - reading %s watts from slave %s", value, description.slave_id)
 
                 if alt_address_used is not None:
                     _LOGGER.info(
@@ -233,13 +245,29 @@ async def async_setup_entry(
     configured_slave_id = entry.options.get(CONF_SLAVE_ID, entry.data.get(CONF_SLAVE_ID, SLAVE_ID))
     _LOGGER.info("Using slave ID %s for PV inverter (configured: %s, default: %s)",
                  configured_slave_id, entry.options.get(CONF_SLAVE_ID), SLAVE_ID)
+
+    # Check if PV slave ID is different from main device
+    pv_slave_different = configured_slave_id != SLAVE_ID
+    if pv_slave_different:
+        _LOGGER.warning("PV inverter configured with different slave ID (%s) than main device (%s). "
+                       "If no PV inverter is connected, set slave ID to %s or remove PV sensors.",
+                       configured_slave_id, SLAVE_ID, SLAVE_ID)
+
     final_descriptions: list[VictronSensorDescription] = []
-    for description in (*GRID_SENSORS, *BATTERY_SENSORS, *PV_SENSORS):
-        if description.key == "total_pv_power":
+    for description in (*GRID_SENSORS, *BATTERY_SENSORS):
+        final_descriptions.append(description)
+
+    # Only add PV sensors if configured with different slave ID (separate PV inverter)
+    # or if using same slave ID (PV data from Cerbo)
+    if configured_slave_id == SLAVE_ID:
+        _LOGGER.info("Using same slave ID for PV sensors - assuming PV data comes from Cerbo GX")
+        for description in PV_SENSORS:
+            final_descriptions.append(description)
+    elif pv_slave_different:
+        _LOGGER.info("Adding PV sensors with separate slave ID %s", configured_slave_id)
+        for description in PV_SENSORS:
             from dataclasses import replace
             final_descriptions.append(replace(description, slave_id=configured_slave_id))
-        else:
-            final_descriptions.append(description)
 
     coordinator = VictronDataUpdateCoordinator(hass, client, tuple(final_descriptions))
     try:
