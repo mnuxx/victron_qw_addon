@@ -12,7 +12,7 @@ DOMAIN = "victron_qw_addon"
 CONF_IP_ADDRESS = "ip_address"
 CONF_SLAVE_ID = "slave_id"
 DEFAULT_PORT = 502
-SLAVE_ID = 21
+SLAVE_ID = 100
 DEFAULT_BATTERY_TEMPERATURE_C = 25.0  # Fallback when temperature register is unavailable
 
 
@@ -74,7 +74,7 @@ GRID_SENSORS: tuple[VictronSensorDescription, ...] = (
         register=2644,
         data_type="uint16",
         multiplier=0.01,
-        slave_id=SLAVE_ID,
+        slave_id=30,
         suggested_display_precision=2,
     ),
     # Input voltages (unsigned, need /10 => multiplier 0.1)
@@ -219,13 +219,3 @@ PV_SENSORS: tuple[VictronSensorDescription, ...] = (
         slave_id=SLAVE_ID,
     ),
 )
-
-# Combined register map for backward compatibility
-REGISTER_MAP = {}
-for sensor in GRID_SENSORS + BATTERY_SENSORS + PV_SENSORS:
-    REGISTER_MAP[sensor.register] = (
-        sensor.key,
-        sensor.native_unit_of_measurement,
-        sensor.multiplier,
-        sensor.device_class
-    )
