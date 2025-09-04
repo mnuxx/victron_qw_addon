@@ -2,11 +2,10 @@
 from __future__ import annotations
 import logging
 from datetime import timedelta
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
-from pymodbus.client import ModbusTcpClient
-from pymodbus.exceptions import ConnectionException
-from pymodbus.constants import Endian
+if TYPE_CHECKING:
+    from pymodbus.client import ModbusTcpClient
 
 from homeassistant.components.sensor import (
     SensorEntity,
@@ -40,7 +39,7 @@ SCAN_INTERVAL = timedelta(seconds=10)
 class VictronDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the Victron device."""
 
-    def __init__(self, hass: HomeAssistant, client: ModbusTcpClient, descriptions: tuple[VictronSensorDescription, ...]) -> None:
+    def __init__(self, hass: HomeAssistant, client: "ModbusTcpClient", descriptions: tuple[VictronSensorDescription, ...]) -> None:
         """Initialize."""
         self.client = client
         self._descriptions = descriptions
@@ -55,6 +54,9 @@ class VictronDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from Victron device."""
+        # Local import to avoid blocking the event loop
+        from pymodbus.exceptions import ConnectionException
+        
         try:
             data = {}
             failures = 0
@@ -219,6 +221,10 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the sensor platform."""
+    # Local imports to avoid blocking the event loop
+    from pymodbus.client import ModbusTcpClient
+    from pymodbus.exceptions import ConnectionException
+    
     # Prefer options over data to allow changes via OptionsFlow
     ip_address = entry.options.get(CONF_IP_ADDRESS, entry.data[CONF_IP_ADDRESS])
     client = ModbusTcpClient(ip_address, port=DEFAULT_PORT)
