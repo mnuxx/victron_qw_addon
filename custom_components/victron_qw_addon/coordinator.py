@@ -8,7 +8,7 @@ from typing import Any
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import DOMAIN, SLAVE_ID, GRID_SENSORS, BATTERY_SENSORS, PV_SENSORS
+from .const import DOMAIN, SLAVE_ID
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class VictronDataCoordinator(DataUpdateCoordinator[VictronData]):
 
     def _read_register(self, client, address: int) -> int | None:
         try:
-            result = client.read_holding_registers(address, 1, slave=SLAVE_ID)
+            result = client.read_holding_registers(address, 1, device_id=SLAVE_ID)
             if result.isError():  # pragma: no cover
                 _LOGGER.debug("Modbus error reading %s: %s", address, result)
                 return None
@@ -47,20 +47,22 @@ class VictronDataCoordinator(DataUpdateCoordinator[VictronData]):
         raw: dict[int, int] = {}
         processed: dict[str, Any] = {}
         client = ModbusTcpClient(self._host, port=self._port, timeout=5)
-        _LOGGER.debug("Attempting Modbus TCP connect to %s:%s (slave %s)", self._host, self._port, SLAVE_ID)
+        _LOGGER.debug("Attempting Modbus TCP connect to %s:%s (device_id %s)", self._host, self._port, SLAVE_ID)
         if not client.connect():  # pragma: no cover
             _LOGGER.warning("Victron QW Addon: Failed to connect to %s:%s", self._host, self._port)
             return VictronData(raw=raw, processed=processed)
         try:
-            for address, (label, unit, scale, device_class) in REGISTER_MAP.items():
-                value = self._read_register(client, address)
-                if value is not None:
-                    raw[address] = value
-                    scaled = value * scale
-                    processed[label] = scaled
-                    _LOGGER.debug("Register %s (%s) raw=%s scaled=%s%s", address, label, value, scaled, unit or "")
-                else:
-                    _LOGGER.debug("Register %s read returned None", address)
+            # TODO: Define REGISTER_MAP or implement register reading logic
+            # for address, (label, unit, scale, device_class) in REGISTER_MAP.items():
+            #     value = self._read_register(client, address)
+            #     if value is not None:
+            #         raw[address] = value
+            #         scaled = value * scale
+            #         processed[label] = scaled
+            #         _LOGGER.debug("Register %s (%s) raw=%s scaled=%s%s", address, label, value, scaled, unit or "")
+            #     else:
+            #         _LOGGER.debug("Register %s read returned None", address)
+            pass
         finally:
             client.close()
         if not processed:

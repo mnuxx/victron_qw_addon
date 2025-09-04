@@ -39,7 +39,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         data_schema = vol.Schema(
             {
                 vol.Required(CONF_IP_ADDRESS): cv.string,
-                vol.Required(CONF_SLAVE_ID, default="100"): cv.string,
+                vol.Required(CONF_SLAVE_ID, default="21"): cv.string,
             }
         )
 
@@ -83,7 +83,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     CONF_SLAVE_ID,
                     default=str(
                         self.config_entry.options.get(
-                            CONF_SLAVE_ID, self.config_entry.data.get(CONF_SLAVE_ID, 100)
+                            CONF_SLAVE_ID, self.config_entry.data.get(CONF_SLAVE_ID, 21)
                         )
                     ),
                 ): cv.string,

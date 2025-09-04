@@ -6,6 +6,7 @@ from typing import Any
 
 from pymodbus.client import ModbusTcpClient
 from pymodbus.exceptions import ConnectionException
+from pymodbus.constants import Endian
 
 from homeassistant.components.sensor import (
     SensorEntity,
@@ -70,10 +71,10 @@ class VictronDataUpdateCoordinator(DataUpdateCoordinator):
 
                 def try_read(fn_name: str, addr: int, count: int = 1):
                     try:
-                        slave = description.slave_id
+                        device_id = description.slave_id
                         if fn_name == 'input':
-                            return self.client.read_input_registers(address=addr, count=count, slave=slave)
-                        return self.client.read_holding_registers(address=addr, count=count, slave=slave)
+                            return self.client.read_input_registers(address=addr, count=count, device_id=device_id)
+                        return self.client.read_holding_registers(address=addr, count=count, device_id=device_id)
                     except Exception as exc:  # noqa: BLE001
                         return exc
 
@@ -113,7 +114,7 @@ class VictronDataUpdateCoordinator(DataUpdateCoordinator):
                         # Only log every 3rd failure after first 3 to reduce noise
                         if count <= 3 or count % 3 == 0:
                             _LOGGER.warning(
-                                "Register %s (key=%s, slave=%s) read failed (attempt %s): %s",
+                                "Register %s (key=%s, device_id=%s) read failed (attempt %s): %s",
                                 base_address,
                                 description.key,
                                 description.slave_id,
@@ -135,18 +136,10 @@ class VictronDataUpdateCoordinator(DataUpdateCoordinator):
                         failures += 1
                         if count <= 3 or count % 3 == 0:
                             _LOGGER.warning(
-                                "Modbus exception 10 (gateway target no response) for key=%s at slave=%s. "
-                                "This may indicate the device is temporarily unavailable or using a different slave ID.",
+                                "Modbus exception 10 (gateway target no response) for key=%s at device_id=%s. Check the slave ID and wiring.",
                                 description.key,
                                 description.slave_id,
                             )
-                    # For PV sensors, be more tolerant of failures since they might be on separate devices
-                    if description.key == "total_pv_power" and count >= 5:
-                        _LOGGER.info(
-                            "PV sensor failed %s times. If you have a separate PV inverter, ensure it's powered on and connected. "
-                            "If not, set the slave ID to %s (same as main device).",
-                            count, SLAVE_ID
-                        )
                     continue
 
                 # Success path: reset fail count
@@ -185,10 +178,6 @@ class VictronDataUpdateCoordinator(DataUpdateCoordinator):
                     except (TypeError, ValueError):
                         _LOGGER.debug("Multiplier application failed for %s", description.key)
                 data[description.key] = value
-
-                # Log successful PV data reads
-                if description.key == "total_pv_power" and base_address in self._fail_counts and self._fail_counts[base_address] > 0:
-                    _LOGGER.info("PV sensor recovered - reading %s watts from slave %s", value, description.slave_id)
 
                 if alt_address_used is not None:
                     _LOGGER.info(
@@ -237,37 +226,18 @@ async def async_setup_entry(
     try:
         if not client.connect():
             raise ConfigEntryNotReady("Initial Modbus connection failed")
-        _LOGGER.info("Successfully connected to Victron device at %s:%s", ip_address, DEFAULT_PORT)
     except ConnectionException as ex:
         raise ConfigEntryNotReady(f"Could not connect to Victron device: {ex}") from ex
 
     # Build final descriptions with configured PV slave
     configured_slave_id = entry.options.get(CONF_SLAVE_ID, entry.data.get(CONF_SLAVE_ID, SLAVE_ID))
-    _LOGGER.info("Using slave ID %s for PV inverter (configured: %s, default: %s)",
-                 configured_slave_id, entry.options.get(CONF_SLAVE_ID), SLAVE_ID)
-
-    # Check if PV slave ID is different from main device
-    pv_slave_different = configured_slave_id != SLAVE_ID
-    if pv_slave_different:
-        _LOGGER.warning("PV inverter configured with different slave ID (%s) than main device (%s). "
-                       "If no PV inverter is connected, set slave ID to %s or remove PV sensors.",
-                       configured_slave_id, SLAVE_ID, SLAVE_ID)
-
     final_descriptions: list[VictronSensorDescription] = []
-    for description in (*GRID_SENSORS, *BATTERY_SENSORS):
-        final_descriptions.append(description)
-
-    # Only add PV sensors if configured with different slave ID (separate PV inverter)
-    # or if using same slave ID (PV data from Cerbo)
-    if configured_slave_id == SLAVE_ID:
-        _LOGGER.info("Using same slave ID for PV sensors - assuming PV data comes from Cerbo GX")
-        for description in PV_SENSORS:
-            final_descriptions.append(description)
-    elif pv_slave_different:
-        _LOGGER.info("Adding PV sensors with separate slave ID %s", configured_slave_id)
-        for description in PV_SENSORS:
+    for description in (*GRID_SENSORS, *BATTERY_SENSORS, *PV_SENSORS):
+        if description.key == "total_pv_power":
             from dataclasses import replace
             final_descriptions.append(replace(description, slave_id=configured_slave_id))
+        else:
+            final_descriptions.append(description)
 
     coordinator = VictronDataUpdateCoordinator(hass, client, tuple(final_descriptions))
     try:

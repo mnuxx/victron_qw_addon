@@ -12,7 +12,7 @@ DOMAIN = "victron_qw_addon"
 CONF_IP_ADDRESS = "ip_address"
 CONF_SLAVE_ID = "slave_id"
 DEFAULT_PORT = 502
-SLAVE_ID = 100
+SLAVE_ID = 21
 DEFAULT_BATTERY_TEMPERATURE_C = 25.0  # Fallback when temperature register is unavailable
 
 
@@ -74,7 +74,7 @@ GRID_SENSORS: tuple[VictronSensorDescription, ...] = (
         register=2644,
         data_type="uint16",
         multiplier=0.01,
-        slave_id=30,
+        slave_id=SLAVE_ID,
         suggested_display_precision=2,
     ),
     # Input voltages (unsigned, need /10 => multiplier 0.1)
