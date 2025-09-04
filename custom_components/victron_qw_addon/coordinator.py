@@ -8,7 +8,7 @@ from typing import Any
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import DOMAIN, REGISTER_MAP, SLAVE_ID
+from .const import DOMAIN, SLAVE_ID, GRID_SENSORS, BATTERY_SENSORS, PV_SENSORS
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -219,3 +219,13 @@ PV_SENSORS: tuple[VictronSensorDescription, ...] = (
         slave_id=SLAVE_ID,
     ),
 )
+
+# Combined register map for backward compatibility
+REGISTER_MAP = {}
+for sensor in GRID_SENSORS + BATTERY_SENSORS + PV_SENSORS:
+    REGISTER_MAP[sensor.register] = (
+        sensor.key,
+        sensor.native_unit_of_measurement,
+        sensor.multiplier,
+        sensor.device_class
+    )

@@ -6,6 +6,9 @@ from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
 
+# Import sensor module to avoid blocking import during async setup
+from . import sensor  # noqa: F401
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Victron QW Addon from a config entry."""
