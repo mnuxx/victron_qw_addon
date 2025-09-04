@@ -245,6 +245,10 @@ async def async_setup_entry(
         else:
             final_descriptions.append(description)
 
+    # Debug: Log all sensor keys and their slave_id
+    for desc in final_descriptions:
+        _LOGGER.debug(f"Sensor key: {desc.key}, slave_id: {desc.slave_id}")
+
     coordinator = VictronDataUpdateCoordinator(hass, client, tuple(final_descriptions))
     try:
         await coordinator.async_config_entry_first_refresh()
