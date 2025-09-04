@@ -225,11 +225,14 @@ async def async_setup_entry(
     try:
         if not client.connect():
             raise ConfigEntryNotReady("Initial Modbus connection failed")
+        _LOGGER.info("Successfully connected to Victron device at %s:%s", ip_address, DEFAULT_PORT)
     except ConnectionException as ex:
         raise ConfigEntryNotReady(f"Could not connect to Victron device: {ex}") from ex
 
     # Build final descriptions with configured PV slave
     configured_slave_id = entry.options.get(CONF_SLAVE_ID, entry.data.get(CONF_SLAVE_ID, SLAVE_ID))
+    _LOGGER.info("Using slave ID %s for PV inverter (configured: %s, default: %s)",
+                 configured_slave_id, entry.options.get(CONF_SLAVE_ID), SLAVE_ID)
     final_descriptions: list[VictronSensorDescription] = []
     for description in (*GRID_SENSORS, *BATTERY_SENSORS, *PV_SENSORS):
         if description.key == "total_pv_power":
