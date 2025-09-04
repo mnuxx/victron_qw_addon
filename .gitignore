@@ -69,3 +69,4 @@ Thumbs.db
 
 # Test output
 tests/__pycache__/
+debug_modbus.py
