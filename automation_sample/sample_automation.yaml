@@ -1,0 +1,346 @@
+alias: QW Mode Automation
+description: >-
+  Automation that runs every 2 seconds and writes to Modbus registers based on
+  QW mode
+triggers:
+  - seconds: /2
+    trigger: time_pattern
+actions:
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: sensor.qw_mode
+            state: normal
+        sequence:
+          - data:
+              address: 38
+              unit: 227
+              value: 0
+              hub: victron
+            action: modbus.write_register
+            alias: Charge enable/disable
+          - data:
+              address: 39
+              unit: 227
+              value: 0
+              hub: victron
+            action: modbus.write_register
+            alias: Grid FeedIn enable/disable
+          - data:
+              address: 37
+              unit: 227
+              value: 0
+              hub: victron
+            action: modbus.write_register
+            alias: Phase 1
+          - data:
+              address: 40
+              unit: 227
+              value: 0
+              hub: victron
+            action: modbus.write_register
+            alias: Phase 2
+          - data:
+              address: 41
+              unit: 227
+              value: 0
+              hub: victron
+            action: modbus.write_register
+            alias: Phase 3
+      - conditions:
+          - condition: state
+            entity_id: sensor.qw_mode
+            state: savebattery
+        sequence:
+          - data:
+              address: 38
+              unit: 227
+              value: 0
+              hub: victron
+            action: modbus.write_register
+            alias: Charge enable/disable
+          - data:
+              address: 39
+              unit: 227
+              value: 0
+              hub: victron
+            action: modbus.write_register
+            alias: Grid FeedIn enable/disable
+          - alias: Phase 1
+            data:
+              address: 37
+              unit: 227
+              value: >-
+                {% set inner = (states('sensor.total_pv_power')|float(0) / 3) -
+                (states('sensor.victron_qw_ac_consumption_l1')|round(0)|abs) %}
+                {{ (-min(0, inner)) | round(0) }}
+              hub: victron
+            action: modbus.write_register
+          - data:
+              address: 40
+              unit: 227
+              value: 500
+              hub: victron
+            action: modbus.write_register
+            alias: Phase 2
+          - alias: Phase 3
+            data:
+              address: 41
+              unit: 227
+              value: >-
+                {% set inner = (states('sensor.total_pv_power')|float(0) / 3) -
+                (states('sensor.victron_qw_ac_consumption_l3')|round(0)|abs) %}
+                {{ (-min(0, inner)) | round(0) }}
+              hub: victron
+            action: modbus.write_register
+      - conditions:
+          - condition: state
+            entity_id: sensor.qw_mode
+            state: pvsell
+        sequence:
+          - data:
+              address: 38
+              unit: 227
+              value: 0
+              hub: victron
+            action: modbus.write_register
+            alias: Charge enable/disable
+          - data:
+              address: 39
+              unit: 227
+              value: 0
+              hub: victron
+            action: modbus.write_register
+            alias: Grid FeedIn enable/disable
+          - alias: Phase 1
+            data:
+              address: 37
+              unit: 227
+              value: >-
+                {% set value = 65535 - max(0,
+                (states('sensor.total_pv_power')|float(0) / 3) -
+                (states('sensor.victron_qw_ac_consumption_l1')|float(0))|round(0)|abs)
+                %} {{ 0 if value == 65535 else value }}
+              hub: victron
+            action: modbus.write_register
+          - alias: Phase 2
+            data:
+              address: 40
+              unit: 227
+              value: >-
+                {% set value = 65535 - max(0,
+                (states('sensor.total_pv_power')|float(0) / 3) -
+                (states('sensor.victron_qw_ac_consumption_l2')|float(0))|round(0)|abs)
+                %} {{ 0 if value == 65535 else value }}
+              hub: victron
+            action: modbus.write_register
+          - alias: Phase 3
+            data:
+              address: 41
+              unit: 227
+              value: >-
+                {% set value = 65535 - max(0,
+                (states('sensor.total_pv_power')|float(0) / 3) -
+                (states('sensor.victron_qw_ac_consumption_l3')|float(0))|round(0)|abs)
+                %} {{ 0 if value == 65535 else value }}
+              hub: victron
+            action: modbus.write_register
+      - conditions:
+          - condition: state
+            entity_id: sensor.qw_mode
+            state: sell
+        sequence:
+          - data:
+              address: 38
+              unit: 227
+              value: 0
+              hub: victron
+            action: modbus.write_register
+            alias: Charge enable/disable
+          - data:
+              address: 39
+              unit: 227
+              value: 0
+              hub: victron
+            action: modbus.write_register
+            alias: Grid FeedIn enable/disable
+          - alias: Phase 1
+            data:
+              address: 37
+              unit: 227
+              value: >-
+                {{  65535 - (( states('sensor.qw_powerlimit')|float(0) ) / 3 )|
+                round(0)| abs }}
+              hub: victron
+            action: modbus.write_register
+          - alias: Phase 2
+            data:
+              address: 40
+              unit: 227
+              value: >-
+                {{  65535 - (( states('sensor.qw_powerlimit')|float(0) ) / 3 )|
+                round(0)| abs }}
+              hub: victron
+            action: modbus.write_register
+          - alias: Phase 3
+            data:
+              address: 41
+              unit: 227
+              value: >-
+                {{  65535 - (( states('sensor.qw_powerlimit')|float(0) ) / 3 )|
+                round(0)| abs }}
+              hub: victron
+            action: modbus.write_register
+      - conditions:
+          - condition: state
+            entity_id: sensor.qw_mode
+            state: frrup
+        sequence:
+          - data:
+              address: 38
+              unit: 227
+              value: 0
+              hub: victron
+            action: modbus.write_register
+            alias: Charge enable/disable
+          - data:
+              address: 39
+              unit: 227
+              value: 0
+              hub: victron
+            action: modbus.write_register
+            alias: Grid FeedIn enable/disable
+          - alias: Phase 1
+            data:
+              address: 37
+              unit: 227
+              value: >-
+                {{  65535 - (( states('sensor.qw_powerlimit')|float(0) ) / 3 )|
+                round(0)| abs }}
+              hub: victron
+            action: modbus.write_register
+          - alias: Phase 2
+            data:
+              address: 40
+              unit: 227
+              value: >-
+                {{  65535 - (( states('sensor.qw_powerlimit')|float(0) ) / 3 )|
+                round(0)| abs }}
+              hub: victron
+            action: modbus.write_register
+          - alias: Phase 3
+            data:
+              address: 41
+              unit: 227
+              value: >-
+                {{  65535 - (( states('sensor.qw_powerlimit')|float(0) ) / 3 )|
+                round(0)| abs }}
+              hub: victron
+            action: modbus.write_register
+      - conditions:
+          - condition: state
+            entity_id: sensor.qw_mode
+            state: buy
+        sequence:
+          - data:
+              address: 38
+              unit: 227
+              value: 0
+              hub: victron
+            action: modbus.write_register
+            alias: Charge enable/disable
+          - data:
+              address: 39
+              unit: 227
+              value: 0
+              hub: victron
+            action: modbus.write_register
+            alias: Grid FeedIn enable/disable
+          - alias: Phase 1
+            data:
+              address: 37
+              unit: 227
+              value: "{{ (states('sensor.qw_powerlimit')|float(0) / 3 )|round(0)|abs}}"
+              hub: victron
+            action: modbus.write_register
+          - alias: Phase 2
+            data:
+              address: 40
+              unit: 227
+              value: "{{ (states('sensor.qw_powerlimit')|float(0) / 3 )|round(0)|abs}}"
+              hub: victron
+            action: modbus.write_register
+          - alias: Phase 3
+            data:
+              address: 41
+              unit: 227
+              value: "{{ (states('sensor.qw_powerlimit')|float(0) / 3 )|round(0)|abs}}"
+              hub: victron
+            action: modbus.write_register
+      - conditions:
+          - condition: state
+            entity_id: sensor.qw_mode
+            state: limitexport
+        sequence:
+          - data:
+              address: 38
+              unit: 227
+              value: 0
+              hub: victron
+            action: modbus.write_register
+            alias: Charge enable/disable
+          - data:
+              address: 39
+              unit: 227
+              value: 0
+              hub: victron
+            action: modbus.write_register
+            alias: Grid FeedIn enable/disable
+          - alias: Phase 1
+            data:
+              address: 37
+              unit: 227
+              value: 50
+              hub: victron
+            action: modbus.write_register
+          - alias: Phase 2
+            data:
+              address: 40
+              unit: 227
+              value: 50
+              hub: victron
+            action: modbus.write_register
+          - alias: Phase 3
+            data:
+              address: 41
+              unit: 227
+              value: 50
+              hub: victron
+            action: modbus.write_register
+          - alias: Limit PV inverter
+            data:
+              address: 1057
+              unit: 20
+              value: >-
+                {{ ((states('sensor.victron_qw_ac_consumption_l1') | float(0)) +
+                (states('sensor.victron_qw_ac_consumption_l2') | float(0)) +
+                (states('sensor.victron_qw_ac_consumption_l3') | float(0))) |
+                int }}
+              hub: victron
+            action: modbus.write_register
+    default:
+      - data:
+          address: 38
+          unit: 227
+          value: 1
+          hub: victron
+        action: modbus.write_register
+        alias: Set passthru
+      - data:
+          address: 39
+          unit: 227
+          value: 1
+          hub: victron
+        action: modbus.write_register
+        alias: Set passthru
+mode: single
