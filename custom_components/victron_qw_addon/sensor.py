@@ -44,7 +44,6 @@ class VictronDataUpdateCoordinator(DataUpdateCoordinator):
         self.client = client
         self._descriptions = descriptions
         self._fail_counts: dict[int, int] = {}
-        self._suppressed: set[int] = set()
         super().__init__(
             hass,
             _LOGGER,
@@ -66,8 +65,7 @@ class VictronDataUpdateCoordinator(DataUpdateCoordinator):
                 if description.key == "victron_qw_battery_power":
                     continue
 
-                if base_address in self._suppressed:
-                    continue  # Skip permanently noisy register
+                # Removed suppression check
 
                 attempts = []  # (label, func_result)
 
@@ -127,12 +125,12 @@ class VictronDataUpdateCoordinator(DataUpdateCoordinator):
                         _LOGGER.warning("Register %s read error: no response", base_address)
 
                     # Suppress after 12 consecutive failures
-                    if self._fail_counts[base_address] >= 12:
-                        self._suppressed.add(base_address)
-                        _LOGGER.error(
-                            "Register %s suppressed after %s consecutive failures. Remove or correct mapping in const.py.",
-                            base_address, self._fail_counts[base_address]
-                        )
+                    # if self._fail_counts[base_address] >= 12:
+                    #     self._suppressed.add(base_address)
+                    #     _LOGGER.error(
+                    #         "Register %s suppressed after %s consecutive failures. Remove or correct mapping in const.py.",
+                    #         base_address, self._fail_counts[base_address]
+                    #     )
                     # Count gateway target failures (ex=10) for reconnect heuristic
                     if any('ex=10' in s for s in fc_summary):
                         failures += 1

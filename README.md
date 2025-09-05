@@ -1,4 +1,3 @@
-
 # Victron QW Addon
 
 This is a custom integration for Home Assistant to integrate with Victron devices via Modbus TCP.
@@ -20,6 +19,11 @@ The integration is configured via the UI. You will be prompted for the IP addres
 
 The integration will use port 502 to connect to the Cerbo GX.
 
-## Compatibility
+## Changelog
 
-**2025-09-04:** The `manifest.json` now allows `pymodbus` versions from 3.9.2 up to (but not including) 4.0.0 for better compatibility with Home Assistant and other integrations. If you had dependency errors, update to the latest version of this addon.
+### 0.2.2
+- Fixed PV power sensor getting stuck at 0 after nighttime unavailability
+- Removed register suppression mechanism to prevent sensors from being permanently skipped after failures
+
+### 0.2.1
+- Initial release with basic Victron QW integration
