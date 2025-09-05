@@ -6,6 +6,8 @@ from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
 
+__version__ = "0.2.2"
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Victron QW Addon from a config entry."""
