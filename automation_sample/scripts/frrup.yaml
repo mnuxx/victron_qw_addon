@@ -1,0 +1,42 @@
+alias: FFR Up Mode
+sequence:
+  - alias: Allow charge from grid
+    action: modbus.write_register
+    metadata: {}
+    data:
+      hub: victron
+      address: 38
+      slave: 227
+      value: 0
+  - alias: Allow discharge to grid
+    action: modbus.write_register
+    metadata: {}
+    data:
+      hub: victron
+      address: 39
+      slave: 227
+      value: 0
+  - alias: Phase 1 config
+    action: modbus.write_register
+    metadata: {}
+    data:
+      hub: victron
+      address: 37
+      slave: 227
+      value: "{{ power }}"
+  - alias: Phase 2 config
+    action: modbus.write_register
+    metadata: {}
+    data:
+      hub: victron
+      address: 40
+      slave: 227
+      value: "{{ power }}"
+  - alias: Phase 3 config
+    action: modbus.write_register
+    metadata: {}
+    data:
+      hub: victron
+      address: 41
+      slave: 227
+      value: "{{ power }}"
