@@ -317,17 +317,26 @@ actions:
               value: 50
               hub: victron
             action: modbus.write_register
-          - alias: Limit PV inverter
-            data:
-              address: 1057
-              unit: 20
-              value: >-
-                {{ ((states('sensor.victron_qw_ac_consumption_l1') | float(0)) +
-                (states('sensor.victron_qw_ac_consumption_l2') | float(0)) +
-                (states('sensor.victron_qw_ac_consumption_l3') | float(0))) |
-                int }}
-              hub: victron
-            action: modbus.write_register
+          - choose:
+              - conditions:
+                  - condition: numeric_state
+                    entity_id: sensor.qw_batterysoc
+                    below: 98
+                sequence:
+                  - alias: Limit PV inverter
+                    data:
+                      address: 1057
+                      unit: 20
+                      value: >-
+                        {{ ((states('sensor.victron_qw_ac_consumption_l1') |
+                        float(0)) +
+                        (states('sensor.victron_qw_ac_consumption_l2') |
+                        float(0)) +
+                        (states('sensor.victron_qw_ac_consumption_l3') |
+                        float(0))) | int }}
+                      hub: victron
+                    action: modbus.write_register
+            alias: Limit when batt is almost full
     default:
       - data:
           address: 38
