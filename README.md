@@ -1,6 +1,6 @@
 # Victron QW Addon
 
-This is a custom integration for Home Assistant to integrate with Victron devices via Modbus TCP.
+This is a custom integration for Home Assistant to integrate with Qilowatt (https://github.com/qilowatt/qilowatt-ha), utilizing the optimizer and participating in the Frequency Reserve Market.
 
 ## Prerequisites
 
