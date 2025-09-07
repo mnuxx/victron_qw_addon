@@ -79,7 +79,10 @@ actions:
           - data:
               address: 40
               unit: 227
-              value: 500
+              value: >-
+                {% set inner = (states('sensor.total_pv_power')|float(0) / 3) -
+                (states('sensor.victron_qw_ac_consumption_l2')|round(0)|abs) %}
+                {{ (-min(0, inner)) | round(0) }}
               hub: victron
             action: modbus.write_register
             alias: Phase 2
