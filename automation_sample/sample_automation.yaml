@@ -324,7 +324,7 @@ actions:
               - conditions:
                   - condition: numeric_state
                     entity_id: sensor.qw_batterysoc
-                    below: 98
+                    above: 97
                 sequence:
                   - alias: Limit PV inverter
                     data:
