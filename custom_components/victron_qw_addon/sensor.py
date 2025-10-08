@@ -287,9 +287,12 @@ class VictronSensor(SensorEntity):
         """Return the state of the sensor."""
         if self.coordinator.data:
             value = self.coordinator.data.get(self.entity_description.key)
-            # For Total PV Power, return 0 instead of None when data is missing
-            if value is None and self.entity_description.key == "total_pv_power":
-                return 0
+            # For Total PV Power, ensure it's always positive or 0
+            if self.entity_description.key == "total_pv_power":
+                if value is None:
+                    return 0
+                # Convert negative values to 0
+                return max(0, value)
             return value
         # For Total PV Power, return 0 when coordinator has no data
         if self.entity_description.key == "total_pv_power":
